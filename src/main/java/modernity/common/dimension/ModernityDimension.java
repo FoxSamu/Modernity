@@ -2,6 +2,7 @@ package modernity.common.dimension;
 
 import modernity.common.block.MDBlocks;
 import modernity.common.levelgen.ModernityChunkGenerator;
+import modernity.common.levelgen.biome.LayeredBiomeProvider;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
@@ -27,7 +28,7 @@ public class ModernityDimension extends Dimension {
     public ChunkGenerator<?> createChunkGenerator() {
         return new ModernityChunkGenerator(
             world,
-            new SingleBiomeProvider( new SingleBiomeProviderSettings( world.getWorldInfo() ).setBiome( Biomes.THE_VOID ) ),
+            new LayeredBiomeProvider(),
             Util.make( new GenerationSettings(), settings -> {
                 settings.setDefaultBlock( MDBlocks.DARK_STONE.getDefaultState() );
                 settings.setDefaultFluid( Blocks.WATER.getDefaultState() );

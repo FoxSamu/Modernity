@@ -2,6 +2,8 @@ package modernity.common.dimension;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.FuzzedBiomeMagnifier;
+import net.minecraft.world.biome.IBiomeMagnifier;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.common.DimensionManager;
@@ -19,7 +21,10 @@ public final class MDDimensions {
             return ModernityDimension::new;
         }
 
-
+        @Override
+        public IBiomeMagnifier getMagnifier() {
+            return FuzzedBiomeMagnifier.INSTANCE;
+        }
     };
 
     private MDDimensions() {

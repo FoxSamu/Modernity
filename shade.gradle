@@ -1,0 +1,111 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'org.ow2.asm', name: 'asm', version: '7.3.1'
+        classpath group: 'org.ow2.asm', name: 'asm-commons', version: '7.3.1'
+    }
+}
+
+
+import org.gradle.api.internal.TaskInputsInternal
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.commons.ClassRemapper
+import org.objectweb.asm.commons.Remapper
+import org.objectweb.asm.commons.*
+import org.objectweb.asm.tree.*
+import org.objectweb.asm.*
+
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
+
+class ShadeRemapper extends Remapper {
+    private final HashMap<String, String> packageRenames = new HashMap<>()
+
+    void addRename( String oldName, String newName ) {
+        packageRenames.put( oldName, newName )
+    }
+
+    @Override
+    String map( String internalName ) {
+        for( Map.Entry<String, String> entry : packageRenames.entrySet() ) {
+            if( internalName.startsWith( entry.getKey() ) ) {
+                return entry.getValue() + internalName.substring( entry.getKey().length() )
+            }
+        }
+        return internalName
+    }
+}
+
+class RemapTask extends DefaultTask {
+    private File input
+    private File output
+    private ShadeRemapper remapper = new ShadeRemapper()
+
+    RemapTask() {
+        doLast {
+            JarOutputStream out = new JarOutputStream( new FileOutputStream( output ) )
+
+            JarFile jar = new JarFile( input )
+            jar.stream().each( { entry ->
+                try {
+                    out.putNextEntry( new JarEntry( remapper.map( entry.getName() ) ) )
+                    if( entry.getName().endsWith( ".class" ) ) {
+                        ClassReader reader = new ClassReader( jar.getInputStream( entry ) )
+                        ClassWriter writer = new ClassWriter( ClassWriter.COMPUTE_FRAMES )
+                        ClassRemapper remapper = new ClassRemapper( writer, remapper )
+                        reader.accept( remapper, ClassReader.EXPAND_FRAMES )
+                        out.write( writer.toByteArray() )
+                    } else {
+                        InputStream is = jar.getInputStream( entry )
+                        byte[] buf = new byte[1024]
+                        int r
+                        while( (r = is.read( buf )) != -1 ) {
+                            out.write( buf, 0, r )
+                        }
+                    }
+                    out.closeEntry()
+                } catch( Throwable thr ) {
+                    thr.printStackTrace()
+                }
+            })
+            out.close(  )
+        }
+    }
+
+    ShadeRemapper getRemapper() {
+        return remapper
+    }
+
+    void setInput( File input ) {
+        this.input = input
+    }
+
+    void setOutput( File output ) {
+        output.parentFile.mkdirs()
+        this.output = output
+    }
+
+    File getInput() {
+        return input
+    }
+
+    File getOutput() {
+        return output
+    }
+
+    void rename( String o, String n ) {
+        remapper.addRename( o, n )
+    }
+}
+
+task shadeJar( type: RemapTask ) {
+    dependsOn 'reobfJar'
+
+    input = file("$buildDir/reobfJar/output.jar")
+    output = file(tasks.jar.archivePath)
+
+    rename("net/rgsw/noise", "modernity/internal/net/rgsw/noise")
+}

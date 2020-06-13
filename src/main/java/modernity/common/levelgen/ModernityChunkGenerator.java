@@ -44,7 +44,7 @@ public class ModernityChunkGenerator extends NoiseChunkGenerator<GenerationSetti
 
     @Override
     public int getGroundHeight() {
-        return this.world.getSeaLevel() + 1;
+        return world.getSeaLevel() + 1;
     }
 
     @Override
