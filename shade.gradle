@@ -9,13 +9,10 @@ buildscript {
 }
 
 
-import org.gradle.api.internal.TaskInputsInternal
 import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
-import org.objectweb.asm.commons.*
-import org.objectweb.asm.tree.*
-import org.objectweb.asm.*
 
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
@@ -107,5 +104,5 @@ task shadeJar( type: RemapTask ) {
     input = file("$buildDir/reobfJar/output.jar")
     output = file(tasks.jar.archivePath)
 
-    rename("net/rgsw/noise", "modernity/internal/net/rgsw/noise")
+    rename("net/rgsw/ptg", "modernity/internal/net/rgsw/ptg")
 }
